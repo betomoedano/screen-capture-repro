@@ -1,50 +1,67 @@
-# Welcome to your Expo app 👋
+# expo-screen-capture Black Screen Bug Reproduction
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Minimal reproduction for the iOS black screen issue with `expo-screen-capture` package.
 
-## Get started
+## Bug Description
 
-1. Install dependencies
+When calling `allowScreenCaptureAsync()` after `preventScreenCaptureAsync()`, the screen turns completely black on iOS. The black screen persists until the app is force-quit and restarted.
 
+## Environment
+
+- Package: `expo-screen-capture` ~8.0.9
+- Platform: iOS (recent versions)
+- Expo SDK: ~54
+
+## Steps to Reproduce
+
+1. Install dependencies:
    ```bash
    npm install
    ```
 
-2. Start the app
-
+2. Start the development server and run on iOS:
    ```bash
-   npx expo start
+   npm run ios
    ```
 
-In the output, you'll find options to open the app in a
+3. Once the app loads, press the "Test Screen Capture Bug" button
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+4. Observe the behavior:
+   - Console logs show all 4 steps completing successfully
+   - Screen turns black after `allowScreenCaptureAsync()` is called
+   - Black screen persists until app is force-quit
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Expected Behavior
 
-## Get a fresh project
+The screen should remain normal after calling `allowScreenCaptureAsync()`. Screen capture prevention should be lifted without any visual changes.
 
-When you're ready, run:
+## Actual Behavior
 
-```bash
-npm run reset-project
+The screen turns completely black after `allowScreenCaptureAsync()` is called, requiring an app restart to recover.
+
+## Test Code
+
+The reproduction uses the exact test code from the bug report:
+
+```typescript
+const testScreenCaptureBug = async () => {
+  try {
+    console.log("[ScreenCapture Test] Step 1: Calling preventScreenCaptureAsync...");
+
+    await ScreenCapture.preventScreenCaptureAsync("test-key");
+
+    console.log("[ScreenCapture Test] Step 2: preventScreenCaptureAsync completed. Waiting 2 seconds...");
+
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    console.log("[ScreenCapture Test] Step 3: Calling allowScreenCaptureAsync...");
+
+    await ScreenCapture.allowScreenCaptureAsync("test-key");
+
+    // This line logs but screen is already black
+    console.log("[ScreenCapture Test] Step 4: allowScreenCaptureAsync completed. If you see this, NO black screen!");
+  } catch (error) {
+    console.error("[ScreenCapture Test] Error:", error);
+  }
+};
 ```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
